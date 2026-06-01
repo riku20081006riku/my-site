@@ -1,10 +1,93 @@
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
-    <title>私のサイト</title>
+    <meta charset="UTF-8">
+    <title>Ready2Go</title>
+    <!-- FullCalendarのCDN（カレンダー用ライブラリ） -->
+    <script src="https://jsdelivr.net"></script>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #fafafa; }
+        h1 { color: #333; text-align: center; }
+        .container { display: flex; gap: 20px; max-width: 1200px; margin: 0 auto; }
+        .left-panel { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .right-panel { width: 320px; display: flex; flex-direction: column; gap: 20px; }
+        #calendar { max-width: 100%; }
+        .box { padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .box h3 { margin-top: 0; border-bottom: 2px solid #5c7cfa; padding-bottom: 5px; }
+        textarea, input[type="datetime-local"] { width: 100%; padding: 8px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background: #5c7cfa; color: white; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; }
+        button:hover { background: #4263eb; }
+    </style>
 </head>
 <body>
-    <h1>ようこそ！</h1>
-    <p>LINEから来てくれてありがとうございます。</p>
+
+    <h1>Ready2Go</h1>
+
+    <div class="container">
+        <!-- 左側：カレンダー表示 -->
+        <div class="left-panel">
+            <div id="calendar"></div>
+        </div>
+
+        <!-- 右側：天気表示 ＆ アラーム設定 -->
+        <div class="right-panel">
+            <!-- 天気予報表示エリア -->
+            <div class="box">
+                <h3>現在の天気</h3>
+                <div id="weather-info">読み込み中...</div>
+            </div>
+
+            <!-- アラーム設定フォーム -->
+            <div class="box">
+                <h3>LINEアラーム設定</h3>
+                <form action="save_alarm.php" method="POST">
+                    <label自动入力 for="alarm_time">通知する日時：</label><br>
+                    <input type="datetime-local" id="alarm_time" name="alarm_time" required><br><br>
+                    
+                    <label for="message">通知メッセージ：</label><br>
+                    <textarea id="message" name="message" rows="4" required>時間になりました！</textarea><br><br>
+                    
+                    <button type="submit">アラームを登録</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 1. カレンダーの初期化
+        document.addEventListener('DOMContentLoaded', function() {
+            const calendarEl = document.getElementById('calendar');
+            const calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'ja',
+                selectable: true,
+                dateClick: function(info) {
+                    // カレンダーの日付をクリックするとフォームに日時を自動セット（午前9時初期値）
+                    document.getElementById('alarm_time').value = info.dateStr + "T09:00";
+                }
+            });
+            calendar.render();
+        });
+
+        // 2. 天気情報の取得（OpenWeatherMapを使用）
+        const apiKey = 'YOUR_OPENWEATHER_API_KEY'; // a5a8f592d38bf2c13f2d515a1bcad8fe
+        const city = 'Tokyo';
+        const weatherUrl = `https://openweathermap.org{city}&appid=${apiKey}&lang=ja&units=metric`;
+
+        if(apiKey !== 'YOUR_OPENWEATHER_API_KEY') {
+            fetch(weatherUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const temp = data.main.temp;
+                    const desc = data.weather[0].description;
+                    document.getElementById('weather-info').innerHTML = `<strong>${city}</strong>: ${desc}<br>気温: ${temp}℃`;
+                })
+                .catch(() => {
+                    document.getElementById('weather-info').textContent = '天気情報の取得に失敗しました';
+                });
+        } else {
+            document.getElementById('weather-info').textContent = 'APIキーを設定すると天気が表示されます';
+        }
+    </script>
 </body>
 </html>
